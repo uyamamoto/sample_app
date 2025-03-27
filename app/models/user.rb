@@ -7,4 +7,11 @@ class User < ApplicationRecord
                     uniqueness: true
   has_secure_password
   validates :password, presence: true, length: { minimum: 8 }
+
+  # 渡された文字列のハッシュ値を返す
+  def User.digest(string)
+    const = ActiveModel::SecurePassword.min_cost ? BCrypt::Engine::MIN_COST :
+                                                    BCrypt::Engine.cost
+    BCrypt::Password.create(string, cost: const)
+  end
 end
