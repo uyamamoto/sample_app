@@ -31,44 +31,51 @@ class FollowPagesTest < Following
     end
   end
 
-  class FollowTest < Following
-
-    test "should follow a user the standard way" do
-      assert_difference "@user.following.count", 1 do
-        post relationships_path, params: { followed_id: @other.id }
-      end
-      assert_redirected_to @other
-    end
-
-    test "should follow a user with Hotwire" do
-      assert_difference "@user.following.count", 1 do
-        post relationships_path(format: :turbo_stream, params: { followed_id: @other.id } )
-      end
+  test "feed on Home page" do
+    get root_path
+    @user.feed.paginate(page: 1).each do |micropost|
+      assert_match CGI.escapeHTML(micropost.content), response.body
     end
   end
+end
 
-  class Unfollow < Following
+class FollowTest < Following
 
-    def setup
-      super
-      @user.follow(@other)
-      @relationship = @user.active_relationships.find_by(followed_id: @other.id)
+  test "should follow a user the standard way" do
+    assert_difference "@user.following.count", 1 do
+      post relationships_path, params: { followed_id: @other.id }
     end
+    assert_redirected_to @other
   end
 
-  class UnfollowTest < Unfollow
-
-    test "should unfollow a user the standard way" do
-      assert_difference "@user.following.count", -1 do
-        delete relationship_path(@relationship)
-      end
-      assert_response :see_other
+  test "should follow a user with Hotwire" do
+    assert_difference "@user.following.count", 1 do
+      post relationships_path(format: :turbo_stream, params: { followed_id: @other.id } )
     end
+  end
+end
 
-    test "should unfollow a user with Hotwire" do
-      assert_difference "@user.following.count", -1 do
-        delete relationship_path(@relationship, format: :turbo_stream)
-      end
+class Unfollow < Following
+
+  def setup
+    super
+    @user.follow(@other)
+    @relationship = @user.active_relationships.find_by(followed_id: @other.id)
+  end
+end
+
+class UnfollowTest < Unfollow
+
+  test "should unfollow a user the standard way" do
+    assert_difference "@user.following.count", -1 do
+      delete relationship_path(@relationship)
+    end
+    assert_response :see_other
+  end
+
+  test "should unfollow a user with Hotwire" do
+    assert_difference "@user.following.count", -1 do
+      delete relationship_path(@relationship, format: :turbo_stream)
     end
   end
 end
